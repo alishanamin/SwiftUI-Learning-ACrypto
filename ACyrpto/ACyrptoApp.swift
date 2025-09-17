@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct ACyrptoApp: App {
+    
+    @StateObject private var vm = HomeViewModel()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationView {
+                HomeView()
+            }.environmentObject(vm)
         }
     }
 }

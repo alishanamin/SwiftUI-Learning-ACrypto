@@ -7,12 +7,18 @@
 
 import SwiftUI
 
-struct Color: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
+
+extension Color{
+    
+    static let theme = ColorTheme()
+    
 }
 
-#Preview {
-    Color()
+struct ColorTheme {
+    
+    let accentColor = Color("AccentColor")
+    let backgroundColor = Color("BackgroundColor")
+    let secondaryTextColor = Color("SecondaryTextColor")
+    let greenColor = Color("GreenColor")
+    let redColor = Color("RedColor")
 }

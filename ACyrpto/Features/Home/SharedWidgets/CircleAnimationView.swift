@@ -8,11 +8,26 @@
 import SwiftUI
 
 struct CircleAnimationView: View {
+    
+    @Binding var isAnimation: Bool
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Circle()
+            .stroke(lineWidth: 5)
+            .scale(isAnimation ? 1.5 : 0)
+            .opacity(isAnimation ? 0 : 1)
+            .animation(
+                isAnimation ? .easeOut(duration: 0.8): .none,
+                value: isAnimation
+            )
     }
 }
 
+
 #Preview {
-    CircleAnimationView()
+    CircleAnimationView(
+        isAnimation: .constant(true)
+        
+    ).foregroundColor(.red)
+        .frame(width: 100,height: 100)
 }

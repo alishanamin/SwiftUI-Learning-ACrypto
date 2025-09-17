@@ -8,11 +8,22 @@
 import SwiftUI
 
 struct CircleIcon: View {
+    let iconName: String
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Circle()
+            .frame(height: 46)
+            .foregroundColor(Color.theme.backgroundColor)
+            .shadow(radius: 5)
+            .overlay {
+                Image(systemName: iconName)
+                    .font(.system(size: 20))
+                    .foregroundColor(Color.theme.accentColor)
+            }
     }
 }
 
 #Preview {
-    CircleIcon()
+    CircleIcon(iconName: "heart.fill")
+        
+        
 }
