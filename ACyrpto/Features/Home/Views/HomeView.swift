@@ -15,8 +15,12 @@ struct HomeView: View {
     
     var body: some View {
         ZStack {
+            
+            
             // Background
             Color.theme.backgroundColor.ignoresSafeArea()
+            
+            
 
             // ===== Main Content =====
             VStack {
