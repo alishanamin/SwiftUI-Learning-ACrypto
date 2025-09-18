@@ -8,6 +8,13 @@ class HomeViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     @Published var searchText: String = ""
+    
+    @Published var statsList: [StatsModel] = [
+        StatsModel(title: "Market Value", volume: "$16.4BN", percentage: 23),
+        StatsModel(title: "Total Value", volume: "$1600.8BN", percentage: -19),
+        StatsModel(title: "24H Value", volume: "$80.4M"),
+        StatsModel(title: "Portfolio", volume: "50.5k", percentage: 10)
+    ]
 
     private let coinService = CoinService()
     private var cancellables = Set<AnyCancellable>()
@@ -21,6 +28,7 @@ class HomeViewModel: ObservableObject {
         
         $searchText
             .combineLatest(coinService.$allCoins)
+            .debounce(for: .seconds(0.5), scheduler: DispatchQueue.main)
             .map { text, coins -> (String, [CoinModel]) in
                 if text.isEmpty {
                     return ("", coins)
@@ -58,19 +66,19 @@ class HomeViewModel: ObservableObject {
     }
     
     // MARK: - Private
-       private func fetchCoins() {
-           self.allCointsList = []
-           coinService.getCoins()
-       }
+    private func fetchCoins() {
+        self.allCointsList = []
+        coinService.getCoins()
+    }
     
     // MARK: - Public actions
-        func refresh() {
-            fetchCoins()
-        }
+    func refresh() {
+        fetchCoins()
+    }
 
-        func retry() {
-            fetchCoins()
-        }
+    func retry() {
+        fetchCoins()
+    }
     
     
 }

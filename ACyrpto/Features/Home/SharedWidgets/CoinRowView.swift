@@ -49,7 +49,7 @@ struct CoinRowView: View {
                 ).foregroundStyle(.red)
 
                 
-            }.frame(minWidth: UIScreen.main.bounds.width/4)
+            }.frame(minWidth: UIScreen.main.bounds.width/3)
         }
     }
 }
