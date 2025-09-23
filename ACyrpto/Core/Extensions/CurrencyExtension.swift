@@ -107,6 +107,28 @@ extension Double {
     var asPercentString: String {
         String(format: "%.2f%%", self)
     }
+    /// Format large numbers into readable strings (e.g. 1_200 -> "1.2K", 1_000_000 -> "1M")
+    func formattedWithAbbreviations(symbol: String? = nil, decimals: Int = 2) -> String {
+            let num = abs(self)
+            let sign = (self < 0) ? "-" : ""
+            
+            let formatter: (Double, String) -> String = { value, suffix in
+                return "\(sign)\(symbol ?? "")\(value.toString(decimals: decimals))\(suffix)"
+            }
+            
+            switch num {
+            case 1_000_000_000_000...:
+                return formatter(num / 1_000_000_000_000, "T")
+            case 1_000_000_000...:
+                return formatter(num / 1_000_000_000, "B")
+            case 1_000_000...:
+                return formatter(num / 1_000_000, "M")
+            case 1_000...:
+                return formatter(num / 1_000, "K")
+            default:
+                return "\(sign)\(symbol ?? "")\(self.toString(decimals: decimals))"
+            }
+        }
     
     /// Convert to grouped string (e.g. 116000 -> "116,000.00")
     func toGroupedString() -> String {

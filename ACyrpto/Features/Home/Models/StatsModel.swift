@@ -15,6 +15,7 @@ struct StatsModel: Identifiable {
     let volume: String
     let percentage: Double?
     
+    
     init(title: String, volume: String, percentage: Double? = nil) {
         self.title = title
         self.volume = volume

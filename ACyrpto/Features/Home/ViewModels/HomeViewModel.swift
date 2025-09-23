@@ -9,22 +9,17 @@ class HomeViewModel: ObservableObject {
     
     @Published var searchText: String = ""
     
-    @Published var statsList: [StatsModel] = [
-        StatsModel(title: "Market Value", volume: "$16.4BN", percentage: 23),
-        StatsModel(title: "Total Value", volume: "$1600.8BN", percentage: -19),
-        StatsModel(title: "24H Value", volume: "$80.4M"),
-        StatsModel(title: "Portfolio", volume: "50.5k", percentage: 10)
-    ]
+    @Published var statsList: [StatsModel] = []
 
     private let coinService = CoinService()
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        fetchCoinsSubscriber()
+        addSubscriber()
         
     }
 
-    private func fetchCoinsSubscriber() {
+    private func addSubscriber() {
         
         $searchText
             .combineLatest(coinService.$allCoins)
@@ -55,13 +50,40 @@ class HomeViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        coinService.$isFetching
+        coinService.$isFetchingCoins
             .assign(to: \.isLoading, on: self)
             .store(in: &cancellables)
 
         coinService.$serviceError
             .compactMap { $0?.localizedDescription }
             .assign(to: \.errorMessage, on: self)
+            .store(in: &cancellables)
+        
+        coinService.$marketStats
+            .map{stats ->[StatsModel] in
+                
+                
+                guard let data = stats else {
+                    return []
+                }
+                return  [
+                    StatsModel(
+                        title: "Total Market Cap",
+                        volume: data.marketCap,
+                        percentage: data.marketCapChangePercentage24hUsd
+                    ),
+                    StatsModel(
+                        title: "Total Market Volume",
+                        volume: data.marketVolume,
+                    ),
+                    StatsModel(
+                        title: "BTC Dominance",
+                        volume: data.btcDominance
+                    ),
+                    StatsModel(title: "PortFolio", volume: "0.0",percentage: 34)
+                ]
+                
+            }.assign(to: \.statsList, on: self)
             .store(in: &cancellables)
     }
     
