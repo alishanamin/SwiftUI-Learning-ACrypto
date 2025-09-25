@@ -96,6 +96,7 @@ extension CoinModel {
         roi: nil,
         lastUpdated: "2013-07-06T00:00:00.000Z",
         sparklineIn7D: nil,
-        priceChangePercentage24hInCurrency: -0.78
+        priceChangePercentage24hInCurrency: -0.78,
+        currentHoldings: 0
     )
 }

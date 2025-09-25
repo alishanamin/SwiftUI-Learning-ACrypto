@@ -1,73 +1,34 @@
 import Foundation
 import Combine
 
-class CoinService {
-    @Published var allCoins: [CoinModel] = []
-    @Published var marketStats: MarketStats?
-    @Published var isFetchingCoins: Bool = false
-    @Published var isFetchingStats: Bool = false
-    @Published var serviceError: Error?
+protocol CoinServiceProtocol {
+    func getCoins() -> AnyPublisher<[CoinModel], Error>
+    func getMarketStats() -> AnyPublisher<MarketStats, Error>
+}
 
-    private var coinSubscription: AnyCancellable?
-    private var statsSubscription: AnyCancellable?
+class CoinService: CoinServiceProtocol {
     
-    init() {
-        getCoins()
-        getMarketStats()
-    }
-
-    func getCoins() {
+    func getCoins() -> AnyPublisher<[CoinModel], Error> {
         guard let url = URL(string:
-                                "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=24h"
-        ) else { return }
-
-        isFetchingCoins = true
-
-        coinSubscription = NetworkManager.download(url: url)
+            "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=24h"
+        ) else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
+        return NetworkManager.download(url: url)
             .decode(type: [CoinModel].self, decoder: JSONDecoder())
-            .sink(
-                receiveCompletion: { completion in
-                    NetworkManager.handleCompletion(
-                        completion,
-                        onFinished: {
-                            [weak self] in self?.isFetchingCoins = false
-                        },
-                        onError: { [weak self] error in
-                            self?.isFetchingCoins = false
-                            self?.serviceError = error
-                        }
-                    )
-                },
-                receiveValue: { [weak self] coins in
-                    self?.allCoins = coins
-                })
+            .eraseToAnyPublisher()
     }
     
-    func getMarketStats() {
+    func getMarketStats() -> AnyPublisher<MarketStats, Error> {
         guard let url = URL(string: "https://api.coingecko.com/api/v3/global") else {
-            return
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
         }
-
-        isFetchingStats = true
-
-        statsSubscription = NetworkManager.download(url: url)
+        
+        return NetworkManager.download(url: url)
             .decode(type: GlobalData.self, decoder: JSONDecoder())
-            .sink(
-                receiveCompletion: { completion in
-                    NetworkManager.handleCompletion(
-                        completion,
-                        onFinished: {
-                            [weak self] in self?.isFetchingStats = false
-                        },
-                        onError: { [weak self] error in
-                            self?.isFetchingStats = false
-                            self?.serviceError = error
-                        }
-                    )
-                },
-                receiveValue: { [weak self] globalData in
-                    self?.marketStats = globalData.data
-                })
+            .compactMap { $0.data }
+            .eraseToAnyPublisher()
     }
 }
 

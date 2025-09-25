@@ -36,7 +36,7 @@ struct ModernSearchField: View {
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(Color.gray.opacity(0.25), lineWidth: 0.5)
         )
-        .padding(.horizontal)
+        
     }
 }
 

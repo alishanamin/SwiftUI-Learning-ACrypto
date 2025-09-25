@@ -1,90 +1,95 @@
-//
-//  HomeView.swift
-//  ACyrpto
-//
-//  Created by ALI SHAN Muhammad Amin on 25/08/2025.
-//
-
 import SwiftUI
 
 struct HomeView: View {
 
     @EnvironmentObject private var homeVM: HomeViewModel
-
     @State var showPortFolio: Bool = false
+    @State var showPortFolioSheet: Bool = false
 
     var body: some View {
-        ZStack {
+        VStack {
+            // ===== Static Section (always visible) =====
+            AppBarHeader
+                .sheet(isPresented: $showPortFolioSheet) {
+                    PortFolioSheetView()
+                }.environmentObject(homeVM)
+            Spacer(minLength: 10)
+            HomeStatsView(showPortFolio: $showPortFolio)
+            Spacer(minLength: 10)
+            ModernSearchField(
+                text: $homeVM.searchText,
+                placeholder: "Search by Name and Symbol......"
+            )
+            Spacer(minLength: 10)
+            nameHeader
 
-            // Background
-            Color.theme.backgroundColor.ignoresSafeArea()
-
-            // ===== Main Content =====
-            VStack {
-                AppBarHeader
-                Spacer(minLength: 10)
-                HomeStatsView(showPortFolio: $showPortFolio)
-                Spacer(minLength: 10)
-                ModernSearchField(
-                    text: $homeVM.searchText,
-                    placeholder: "Search by Name and Symbol......"
-                )
-                Spacer(minLength: 10)
-                nameHeader
-                if showPortFolio {
-                    PortFolioCoinListView
-                        .transition(.move(edge: .trailing))
-
-                } else {
-                    AllCoinListView
-                        .transition(.move(edge: .leading))
-                        
-                }
-            }
-
-            // ===== Error Overlay =====
-            if let error = homeVM.errorMessage {
-                VStack(spacing: 12) {
-                    Text("⚠️ \(error)")
-                        .multilineTextAlignment(.center)
-                        .padding()
-
-                    Button {
-                        homeVM.retry()
-                    } label: {
-                        Text("Retry")
+            // ===== Dynamic Section (replaces list area) =====
+            ZStack {
+                if homeVM.isLoading {
+                    // Loader replaces list area
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(1.3)
+                            .padding()
+                        Spacer()
                     }
+                } else if let error = homeVM.errorMessage {
+                    // Error replaces list area
+                    VStack(spacing: 12) {
+                        Text("⚠️ \(error)")
+                            .multilineTextAlignment(.center)
+                            .padding()
 
+                        Button("Retry") {
+                            homeVM.retry()
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    // Show lists or "No Coin Found"
+                    if showPortFolio {
+                        if homeVM.portFolioCointsList.isEmpty {
+                            Text("⚠️ No Coin Found")
+                                .multilineTextAlignment(.center)
+                                .padding()
+                        } else {
+                            PortFolioCoinListView
+                                .transition(.move(edge: .trailing))
+                        }
+                    } else {
+                        if homeVM.allCointsList.isEmpty {
+                            Text("⚠️ No Coin Found")
+                                .multilineTextAlignment(.center)
+                                .padding()
+                        } else {
+                            AllCoinListView
+                                .transition(.move(edge: .leading))
+                        }
+                    }
                 }
-
             }
-
-            // ===== Loader Overlay =====
-            if homeVM.isLoading {
-
-                ProgressView()
-
-            }
-        }.padding()
-
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity
+            ) // fills only list area
+        }.padding(8)
+        
+        .background(Color.theme.backgroundColor.ignoresSafeArea())
     }
 
     private var nameHeader: some View {
         HStack {
             Text("Coin")
             Spacer()
-
             if showPortFolio {
                 Text("Holdings")
-
             }
-
             Text("Price")
                 .frame(
                     width: UIScreen.main.bounds.width / 3,
                     alignment: .trailing
                 )
-
         }
         .padding(.horizontal)
         .font(.body)
@@ -98,7 +103,6 @@ struct HomeView: View {
             Text(showPortFolio ? "Portfolio" : "Live Prices")
                 .font(.title2.bold())
             Spacer()
-
             chevronButton
         }
         .padding(.horizontal)
@@ -113,11 +117,8 @@ struct HomeView: View {
                     )
             }
         }
-        .refreshable {
-            homeVM.refresh()
-        }
+        .refreshable { homeVM.refresh() }
         .listStyle(.plain)
-
     }
 
     private var PortFolioCoinListView: some View {
@@ -139,7 +140,11 @@ struct HomeView: View {
                     .foregroundColor(.red)
                     .frame(width: 60, height: 60)
             )
-
+            .onTapGesture {
+                withAnimation(.easeInOut) {
+                    showPortFolioSheet.toggle()
+                }
+            }
     }
 
     private var chevronButton: some View {
@@ -152,11 +157,12 @@ struct HomeView: View {
                 }
             }
     }
-
 }
 
 #Preview {
     NavigationView {
         HomeView()
-    }.environmentObject(HomeViewModel())
+    }
+    .environmentObject(HomeViewModel())
 }
+

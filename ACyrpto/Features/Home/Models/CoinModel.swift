@@ -29,6 +29,7 @@ struct CoinModel: Codable, Identifiable, Sendable {
     let lastUpdated: String?
     let sparklineIn7D: SparklineIn7D?
     let priceChangePercentage24hInCurrency: Double?
+    let currentHoldings: Double?
 
     struct ROI: Codable, Sendable {
         let times: Double?
@@ -65,6 +66,48 @@ struct CoinModel: Codable, Identifiable, Sendable {
         case lastUpdated = "last_updated"
         case sparklineIn7D = "sparkline_in_7d"
         case priceChangePercentage24hInCurrency = "price_change_percentage_24h_in_currency"
+        case currentHoldings
+    }
+    func updateHoldings(amount: Double) -> CoinModel {
+        return CoinModel(
+            id: id,
+            symbol: symbol,
+            name: name,
+            image: image,
+            currentPrice: currentPrice,
+            marketCap: marketCap,
+            marketCapRank: marketCapRank,
+            fullyDilutedValuation: fullyDilutedValuation,
+            totalVolume: totalVolume,
+            high24h: high24h,
+            low24h: low24h,
+            priceChange24h: priceChange24h,
+            priceChangePercentage24h: priceChangePercentage24h,
+            marketCapChange24h: marketCapChange24h,
+            marketCapChangePercentage24h: marketCapChangePercentage24h,
+            circulatingSupply: circulatingSupply,
+            totalSupply: totalSupply,
+            maxSupply: maxSupply,
+            ath: ath,
+            athChangePercentage: athChangePercentage,
+            athDate: athDate,
+            atl: atl,
+            atlChangePercentage: atlChangePercentage,
+            atlDate: atlDate,
+            roi: roi,
+            lastUpdated: lastUpdated,
+            sparklineIn7D: sparklineIn7D,
+            priceChangePercentage24hInCurrency: priceChangePercentage24hInCurrency,
+            currentHoldings: amount
+        )
+    }
+        
+    var currentHoldingsValue: Double {
+        return (currentHoldings ?? 0) * currentPrice
+    }
+        
+    var rank: Int {
+        return Int(marketCapRank ?? 0)
     }
 }
 
