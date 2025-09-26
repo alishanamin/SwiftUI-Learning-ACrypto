@@ -1,29 +1,44 @@
+
 import Foundation
 import Combine
 
 class HomeViewModel: ObservableObject {
-    @Published private var allCoins: [CoinModel] = []   // 👈 source of truth
-    @Published var allCointsList: [CoinModel] = []      // 👈 filtered list for UI
-    @Published var portFolioCointsList: [CoinModel] = []
+    @Published private var allCoins: [CoinModel] = []
+    @Published var allCoinsList: [CoinModel] = []
+    @Published var portFolioCoinsList: [CoinModel] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var searchText: String = ""
     @Published var statsList: [StatsModel] = []
+    @Published private var marketStats: MarketStats?
+
 
     private let coinService: CoinServiceProtocol
+    private let portfolioService: PortfolioCoreDataService
     private var cancellables = Set<AnyCancellable>()
 
-    init(service: CoinServiceProtocol = CoinService()) {
+    
+
+    init(
+        service: CoinServiceProtocol = CoinService(),
+        folioService: PortfolioCoreDataService = PortfolioCoreDataService()
+    ) {
         self.coinService = service
-        addSubscriber()
+        self.portfolioService = folioService
+        addSubscribers()
         fetchCoins()
         fetchMarketStats()
     }
 
+    func updatePortFolio(coin: CoinModel, amount: Double) {
+        portfolioService.updatePortFolio(coin: coin, amount: amount)
+    }
+
     // MARK: - Subscribers
-    private func addSubscriber() {
+    private func addSubscribers() {
+        // Search filter
         $searchText
-            .combineLatest($allCoins)  // 👈 use unfiltered source
+            .combineLatest($allCoins)
             .debounce(for: .seconds(0.5), scheduler: DispatchQueue.main)
             .map { text, coins -> [CoinModel] in
                 guard !text.isEmpty else { return coins }
@@ -33,8 +48,53 @@ class HomeViewModel: ObservableObject {
                     $0.symbol.lowercased().contains(lower)
                 }
             }
-            .assign(to: \.allCointsList, on: self)
+            .assign(to: \.allCoinsList, on: self)
             .store(in: &cancellables)
+
+        // Portfolio coins with holdings
+        $allCoins
+            .combineLatest(portfolioService.$portfolio)
+            .map { coins, entities -> [CoinModel] in
+                coins.compactMap { coin in
+                    guard let entity = entities.first(where: { $0.coinID == coin.id }) else {
+                        return nil
+                    }
+                    return coin.updateHoldings(amount: entity.amount)
+                }
+            }
+            .assign(to: \.portFolioCoinsList, on: self)
+            .store(in: &cancellables)
+
+        $marketStats
+            .combineLatest($portFolioCoinsList)
+            .compactMap { marketStats, portfolioCoins -> [StatsModel]? in
+                guard let marketStats else { return nil }
+
+                let portfolioValue = portfolioCoins.map { $0.currentHoldingsValue }.reduce(0, +)
+
+                return [
+                    StatsModel(
+                        title: "Total Market Cap",
+                        volume: marketStats.marketCap,
+                        percentage: marketStats.marketCapChangePercentage24hUsd
+                    ),
+                    StatsModel(
+                        title: "Total Market Volume",
+                        volume: marketStats.marketVolume
+                    ),
+                    StatsModel(
+                        title: "BTC Dominance",
+                        volume: marketStats.btcDominance
+                    ),
+                    StatsModel(
+                        title: "Portfolio",
+                        volume: portfolioValue.toCurrencyString(code: "$")
+                        )
+                ]
+            }
+            .assign(to: \.statsList, on: self)
+            .store(in: &cancellables)
+
     }
 
     // MARK: - Fetch
@@ -52,8 +112,8 @@ class HomeViewModel: ObservableObject {
                     }
                 },
                 receiveValue: { [weak self] coins in
-                    self?.allCoins = coins           // 👈 update source
-                    self?.allCointsList = coins      // 👈 update display (no search yet)
+                    self?.allCoins = coins
+                    self?.allCoinsList = coins
                 }
             )
             .store(in: &cancellables)
@@ -69,22 +129,7 @@ class HomeViewModel: ObservableObject {
                     }
                 },
                 receiveValue: { [weak self] data in
-                    self?.statsList = [
-                        StatsModel(
-                            title: "Total Market Cap",
-                            volume: data.marketCap,
-                            percentage: data.marketCapChangePercentage24hUsd
-                        ),
-                        StatsModel(
-                            title: "Total Market Volume",
-                            volume: data.marketVolume
-                        ),
-                        StatsModel(
-                            title: "BTC Dominance",
-                            volume: data.btcDominance
-                        ),
-                        StatsModel(title: "PortFolio", volume: "0.0", percentage: 34)
-                    ]
+                    self?.marketStats = data
                 }
             )
             .store(in: &cancellables)
@@ -93,11 +138,11 @@ class HomeViewModel: ObservableObject {
     // MARK: - Public Actions
     func refresh() {
         fetchCoins()
+        fetchMarketStats()
     }
 
     func retry() {
         fetchCoins()
+        fetchMarketStats()
     }
 }
-
-

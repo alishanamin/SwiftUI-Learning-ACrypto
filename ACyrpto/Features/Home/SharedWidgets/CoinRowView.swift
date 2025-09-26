@@ -34,10 +34,10 @@ struct CoinRowView: View {
             if showHoldings{
                 VStack (alignment: .trailing){
                     Text(
-                        coin.currentPrice.format(using: .currency(code: "$"))
+                        coin.currentHoldingsValue.format(using: .currency(code: "$"))
                     ).fontWeight(.bold)
                     Text(
-                        coin.priceChangePercentage24hInCurrency?.asPercentString ?? "N/A"
+                        coin.currentHoldings?.toString(decimals: 1) ?? "N/A"
                     )
                 }
             }

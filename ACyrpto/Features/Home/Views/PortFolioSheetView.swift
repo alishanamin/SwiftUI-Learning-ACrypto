@@ -42,16 +42,31 @@ struct PortFolioSheetView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack (spacing: 10){
-                        Image(systemName: "checkmark")
-                        Text("SAVE")
-                    }.padding(5)
-                        .opacity(
-                            selectedCoin != nil &&  selectedCoin?.currentHoldings != Double(
+                    Button {
+                        guard let coin = selectedCoin,
+                              let amount = Double(amountText)
+                        else { return }
+                        homeVM.updatePortFolio(coin: coin, amount: amount)
+                        dismiss()
+                        UIApplication.shared.hideKeyboard()
+                        homeVM.searchText = ""
+                        
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark")
+                            Text("SAVE")
+                        }
+                        .padding(5)
+                    }
+                    .disabled(
+                        !(
+                            selectedCoin != nil && selectedCoin?.currentHoldings != Double(
                                 amountText
-                            ) ? 1.0 : 0.0
+                            )
                         )
+                    )
                 }
+
             }
         }
     }
@@ -60,17 +75,35 @@ struct PortFolioSheetView: View {
         guard let quantity = Double(amountText) else { return 0 }
         return quantity * (selectedCoin?.currentPrice ?? 0)
     }
+    
+    private func updateCoin(coin: CoinModel){
+        selectedCoin = coin
+        
+        if  let portfolioCoin = homeVM.portFolioCoinsList.first(
+            where: {$0.id == coin.id
+            }),
+            let amount = portfolioCoin.currentHoldings{
+            amountText = "\(amount)"
+        
+        }else{
+            amountText = "\(getCurrentValue())"
+        }
+    }
 }
+
+
 
 extension PortFolioSheetView {
     var CoinHList: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 10) {
-                ForEach(homeVM.allCointsList) { coin in
+                ForEach(
+                    homeVM.searchText.isEmpty ? homeVM.portFolioCoinsList : homeVM.allCoinsList
+                ) { coin in
                     CoinLogoTextWidget(coin: coin)
                         .onTapGesture {
                             withAnimation(.easeIn) {
-                                selectedCoin = coin
+                                updateCoin(coin: coin)
                             }
                         }
                         .padding(5)
@@ -86,6 +119,8 @@ extension PortFolioSheetView {
         }
     }
 }
+
+
 
 private struct SelectedCoinDetailsView: View {
     let coin: CoinModel

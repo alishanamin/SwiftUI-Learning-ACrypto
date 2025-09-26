@@ -49,7 +49,7 @@ struct HomeView: View {
                 } else {
                     // Show lists or "No Coin Found"
                     if showPortFolio {
-                        if homeVM.portFolioCointsList.isEmpty {
+                        if homeVM.portFolioCoinsList.isEmpty {
                             Text("⚠️ No Coin Found")
                                 .multilineTextAlignment(.center)
                                 .padding()
@@ -58,7 +58,7 @@ struct HomeView: View {
                                 .transition(.move(edge: .trailing))
                         }
                     } else {
-                        if homeVM.allCointsList.isEmpty {
+                        if homeVM.allCoinsList.isEmpty {
                             Text("⚠️ No Coin Found")
                                 .multilineTextAlignment(.center)
                                 .padding()
@@ -80,7 +80,9 @@ struct HomeView: View {
 
     private var nameHeader: some View {
         HStack {
+           
             Text("Coin")
+            
             Spacer()
             if showPortFolio {
                 Text("Holdings")
@@ -110,7 +112,7 @@ struct HomeView: View {
 
     private var AllCoinListView: some View {
         List {
-            ForEach(homeVM.allCointsList) { coin in
+            ForEach(homeVM.allCoinsList) { coin in
                 CoinRowView(coin: coin, showHoldings: false)
                     .listRowInsets(
                         .init(top: 10, leading: 10, bottom: 10, trailing: 10)
@@ -123,12 +125,13 @@ struct HomeView: View {
 
     private var PortFolioCoinListView: some View {
         List {
-            ForEach(homeVM.portFolioCointsList) { coin in
+            ForEach(homeVM.portFolioCoinsList) { coin in
                 CoinRowView(coin: coin, showHoldings: true)
                     .listRowInsets(
                         .init(top: 10, leading: 5, bottom: 10, trailing: 0)
                     )
             }
+            
         }
         .listStyle(.plain)
     }
