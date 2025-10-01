@@ -9,7 +9,7 @@ import SwiftUI
 
 struct StatsCard: View {
     
-    var stats : StatsModel
+    var stats : StatisticModel
 
     var body: some View {
         VStack (alignment: .leading,spacing: 4){
@@ -17,21 +17,21 @@ struct StatsCard: View {
                 .font(.caption)
                 .fontWeight(.medium)
                 .foregroundColor(.gray)
-            Text(stats.volume)
+            Text(stats.value)
                 .font(.headline )
                 .fontWeight(.bold)
             HStack(spacing: 4) {
                 Image(systemName: "triangle.fill")
                     .font(.caption2)
                     .rotationEffect(Angle(
-                        degrees: (stats.percentage ?? 0) >= 0 ? 0 : 180
+                        degrees: (stats.percentageChange ?? 0) >= 0 ? 0 : 180
                     ))
-                Text(stats.percentage?.asPercentString ?? "")
+                Text(stats.percentageChange?.asPercentString ?? "")
                     .font(.callout)
                     .fontWeight(.bold)
             }
-            .foregroundColor((stats.percentage ?? 0) >= 0 ? .green : .red)
-            .opacity(stats.percentage == nil ? 0 : 1)
+            .foregroundColor((stats.percentageChange ?? 0) >= 0 ? .green : .red)
+            .opacity(stats.percentageChange == nil ? 0 : 1)
             .frame(height: 18) 
 
         }
@@ -40,10 +40,10 @@ struct StatsCard: View {
 
 #Preview {
     StatsCard(
-        stats: StatsModel(
+        stats: StatisticModel(
             title: "Market Value",
-            volume: "$12.6BN",
-            percentage: 34
+            value: "$12.6BN",
+            percentageChange: 34
         ),
 
     )

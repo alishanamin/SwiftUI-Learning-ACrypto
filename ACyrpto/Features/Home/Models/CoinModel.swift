@@ -1,6 +1,6 @@
 import Foundation
 
-struct CoinModel: Codable, Identifiable, Sendable {
+struct CoinModel: Codable, Identifiable, Sendable,Equatable,Hashable {
     let id: String
     let symbol: String
     let name: String
@@ -31,13 +31,13 @@ struct CoinModel: Codable, Identifiable, Sendable {
     let priceChangePercentage24hInCurrency: Double?
     let currentHoldings: Double?
 
-    struct ROI: Codable, Sendable {
+    struct ROI: Codable, Sendable,Equatable,Hashable {
         let times: Double?
         let currency: String?
         let percentage: Double?
     }
 
-    struct SparklineIn7D: Codable, Sendable {
+    struct SparklineIn7D: Codable, Sendable,Equatable,Hashable {
         let price: [Double]?
     }
 
