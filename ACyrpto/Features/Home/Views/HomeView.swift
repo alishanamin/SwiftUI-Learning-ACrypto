@@ -5,6 +5,7 @@ struct HomeView: View {
     @EnvironmentObject private var homeVM: HomeViewModel
     @State var showPortFolio: Bool = false
     @State var showPortFolioSheet: Bool = false
+    @State var showSettingsSheet: Bool = false
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -15,6 +16,9 @@ struct HomeView: View {
                     .sheet(isPresented: $showPortFolioSheet) {
                         PortFolioSheetView()
                     }.environmentObject(homeVM)
+                    .sheet(isPresented: $showSettingsSheet) {
+                        SettingsView()
+                    }
                 Spacer(minLength: 10)
                 HomeStatsView(showPortFolio: $showPortFolio)
                 Spacer(minLength: 10)
@@ -218,12 +222,18 @@ struct HomeView: View {
             )
             .onTapGesture {
                 withAnimation(.easeInOut) {
-                    showPortFolioSheet.toggle()
+                    if showPortFolio {
+                        showPortFolioSheet.toggle()
+                    }else{
+                        showSettingsSheet.toggle()
+                    }
                 }
             }
     }
 
     private var chevronButton: some View {
+        
+        
         CircleIcon(iconName: "chevron.right")
             .rotationEffect(.degrees(showPortFolio ? 180 : 0))
             .animation(.easeOut(duration: 0.3), value: showPortFolio)

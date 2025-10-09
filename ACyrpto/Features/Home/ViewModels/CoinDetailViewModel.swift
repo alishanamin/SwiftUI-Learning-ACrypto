@@ -15,6 +15,10 @@ class CoinDetailViewModel: ObservableObject {
     @Published private(set) var coinDetailModel: CoinDetailModel?
     @Published private(set) var isLoading: Bool = false
     @Published private(set) var errorMessage: String?
+    @Published private(set) var descriptionText: String = ""
+    @Published private(set) var webLink: String = ""
+    @Published private(set) var reddirectURL: String = ""
+
     
     private let coinService: CoinServiceProtocol
     private var cancellables = Set<AnyCancellable>()
@@ -28,17 +32,35 @@ class CoinDetailViewModel: ObservableObject {
     
     // MARK: - Subscribers
     private func addSubscriber() {
-        
         $coinDetailModel
             .combineLatest($coin)
-            .map(mapDataToStatistics)
-            .sink { [weak self] (returnedArrays) in
-                self?.overViewStats = returnedArrays.overview
-                self?.additionalOverViewStats = returnedArrays.additional
+            .map { [weak self] detail, coin in
+                // build stats
+                let stats = self?.mapDataToStatistics(coinDetailModel: detail, coinModel: coin)
+                
+                // build description
+                let description = detail?.description?.en ?? ""
+                let link = detail?.links?.homepage?.first ?? ""
+                let reddirect = detail?.links?.subredditURL ?? ""
+                
+                return (overview: stats?.overview ?? [],
+                        additional: stats?.additional ?? [],
+                        description: description,
+                        webLink: link,
+                        subredditURL: reddirect,
+                )
+            }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] result in
+                self?.overViewStats = result.overview
+                self?.additionalOverViewStats = result.additional
+                self?.descriptionText = result.description
+                self?.webLink = result.webLink
+                self?.reddirectURL = result.subredditURL
             }
             .store(in: &cancellables)
-        
     }
+
     
     // MARK: - Networking
     private func getCoinDetail(coinID: String) {
@@ -78,9 +100,9 @@ class CoinDetailViewModel: ObservableObject {
     
     private func createOverviewArray(coinModel: CoinModel) -> [StatisticModel] {
         let price = coinModel.currentPrice.toCurrencyStringFormat(code: "$")
-        let pricePercentChange = coinModel.priceChangePercentage24h
+        let pricePercentChange = coinModel.priceChangePercentage24hInCurrency
         let priceStat = StatisticModel(title: "Current Price", value: price, percentageChange: pricePercentChange)
-        
+    
         let marketCap = "$" + (coinModel.marketCap?.formattedWithAbbreviations() ?? "")
         let marketCapPercentChange = coinModel.marketCapChangePercentage24h
         let marketCapStat = StatisticModel(title: "Market Capitalization", value: marketCap, percentageChange: marketCapPercentChange)
@@ -99,13 +121,13 @@ class CoinDetailViewModel: ObservableObject {
         coinModel: CoinModel
     ) -> [StatisticModel] {
         
-        let high = coinModel.high24h?.toCurrencyStringFormat(code: "$") ?? "n/a"
+        let high = coinModel.high24h?.toCurrencyStringFormat(code: "$") ?? "N/A"
         let highStat = StatisticModel(title: "24h High", value: high)
         
-        let low = coinModel.low24h?.toCurrencyStringFormat(code: "$") ?? "n/a"
+        let low = coinModel.low24h?.toCurrencyStringFormat(code: "$") ?? "N/A"
         let lowStat = StatisticModel(title: "24h Low", value: low)
         
-        let priceChange = coinModel.priceChange24h?.toCurrencyStringFormat(code: "$") ?? "n/a"
+        let priceChange = coinModel.priceChange24h?.toCurrencyStringFormat(code: "$") ?? "N/A"
         let pricePercentChange = coinModel.priceChangePercentage24h
         let priceChangeStat = StatisticModel(title: "24h Price Change", value: priceChange, percentageChange: pricePercentChange)
         
@@ -117,7 +139,7 @@ class CoinDetailViewModel: ObservableObject {
         let blockTimeString = blockTime == 0 ? "N/A" : "\(blockTime)"
         let blockStat = StatisticModel(title: "Block Time", value: blockTimeString)
         
-        let hashing = coinDetailModel?.hashingAlgorithm ?? "N?A"
+        let hashing = coinDetailModel?.hashingAlgorithm ?? "N/A"
         let hashingStat = StatisticModel(title: "Hashing Algorithm", value: hashing)
         
         return [highStat, lowStat, priceChangeStat, marketCapChangeStat, blockStat, hashingStat]
